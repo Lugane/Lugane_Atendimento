@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lugane Atendimento</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f6f8;
+      padding: 20px;
+    }
+
+    h1, h2 {
+      color: #333;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    input, textarea, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 25px;
+    }
+
+    table, th, td {
+      border: 1px solid #ddd;
+    }
+
+    th, td {
+      padding: 8px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Lugane Atendimento</h1>
+
+  <div id="form-atendimento">
+    <h2>Registrar Atendimento</h2>
+
+    <div class="form-group">
+      <label for="nomeAtend">Nome</label>
+      <input type="text" id="nomeAtend" placeholder="Nome">
+    </div>
+
+    <div class="form-group">
+      <label for="descricaoAtend">Descrição</label>
+      <input type="text" id="descricaoAtend" placeholder="Descrição">
+    </div>
+
+    <div class="form-group">
+      <label for="dataAtend">Data</label>
+      <input type="date" id="dataAtend">
+    </div>
+
+    <div class="form-group">
+      <label for="empresaAtend">Empresa Atendida</label>
+      <input type="text" id="empresaAtend" placeholder="Empresa Atendida">
+    </div>
+
+    <button onclick="salvarAtendimento()">Salvar Atendimento</button>
+  </div>
+
+  <h2>Lista de Atendimentos</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>Descrição</th>
+        <th>Data</th>
+        <th>Empresa</th>
+      </tr>
+    </thead>
+    <tbody id="tabela-atendimentos"></tbody>
+  </table>
+
+  <!-- Firebase SDK -->
+  <script type="module" src="script.js"></script>
+</body>
+</html>
+
+<!-- Está salvando no Firebase, podemos evoluir ainda o código -->
+<!-- Opção de apagar um atendimento -->
