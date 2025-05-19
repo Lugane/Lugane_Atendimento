@@ -19,7 +19,7 @@
       margin-bottom: 15px;
     }
 
-    input, textarea, button {
+    input, button {
       width: 100%;
       padding: 10px;
       margin-top: 5px;
@@ -29,14 +29,14 @@
     }
 
     button {
-      background-color: #007bff;
+      background-color: #d8773f;
       color: white;
       border: none;
       cursor: pointer;
     }
 
     button:hover {
-      background-color: #0056b3;
+      background-color: #cc6123;
     }
 
     table {
@@ -57,11 +57,56 @@
     th {
       background-color: #f2f2f2;
     }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      height: 120px;
+    }
+
+    .header img {
+      position: absolute;
+      left: 0;
+      height: 100%;
+      width: auto;
+      padding-left: 10px;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 1.5rem;
+      text-align: center;
+      font-style: italic;
+    }
+
+    #form-atendimento, table, h2 {
+      display: none;
+    }
+
+    #tela-login {
+      width: 400px;
+      height: 500px;
+      margin: auto;
+      text-align: center;
+      justify-content: center;
+      margin-top: 100px;
+    }
   </style>
 </head>
-<body>
 
-  <h1>Lugane Atendimento</h1>
+<body>
+  <div class="header">
+    <img src="/logo_semfundo.png" alt="">
+    <h1>Lugane Atendimento:</h1>
+  </div>
+
+  <div id="tela-login">
+    <h2>Digite a senha para acessar:</h2>
+    <input type="password" id="senhaLogin" placeholder="Senha de acesso">
+    <button onclick="verificarSenha()">Entrar</button>
+  </div>
 
   <div id="form-atendimento">
     <h2>Registrar Atendimento</h2>
@@ -97,33 +142,19 @@
         <th>Descrição</th>
         <th>Data</th>
         <th>Empresa</th>
+        <th>Ações</th>
       </tr>
     </thead>
     <tbody id="tabela-atendimentos"></tbody>
   </table>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getDatabase, ref, push, set, onValue } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+  <script>
+    const API_URL = "http://localhost:3000/api/atendimentos";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyCbYPpH8kBvd3w0G99xrlsqcvJ51OyItS4",
-      authDomain: "lugane-estoque-a76a6.firebaseapp.com",
-      databaseURL: "https://lugane-estoque-a76a6-default-rtdb.firebaseio.com",
-      projectId: "lugane-estoque-a76a6",
-      storageBucket: "lugane-estoque-a76a6.appspot.com",
-      messagingSenderId: "218820542563",
-      appId: "1:218820542563:web:5c39fe1643bdb6cfed7856"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-    const atendimentosRef = ref(db, 'atendimentos');
-
-    window.salvarAtendimento = function () {
+    async function salvarAtendimento() {
       const nome = document.getElementById('nomeAtend').value.trim();
       const descricao = document.getElementById('descricaoAtend').value.trim();
-      const data = document.getElementById('dataAtend').value;
+      const data = document.getElementById('dataAtend').value; // já vem como string "YYYY-MM-DD"
       const empresa = document.getElementById('empresaAtend').value.trim();
 
       if (!nome || !descricao || !data || !empresa) {
@@ -131,46 +162,111 @@
         return;
       }
 
-      const novaRef = push(atendimentosRef);
-      set(novaRef, {
-        nome,
-        descricao,
-        data,
-        empresa
-      }).then(() => {
-        alert("Atendimento salvo com sucesso!");
-        document.getElementById('nomeAtend').value = '';
-        document.getElementById('descricaoAtend').value = '';
-        document.getElementById('dataAtend').value = '';
-        document.getElementById('empresaAtend').value = '';
-      }).catch((error) => {
-        alert("Erro ao salvar atendimento: " + error.message);
-      });
-    };
+      const atendimento = { nome, descricao, data, empresa };
 
-    onValue(atendimentosRef, (snapshot) => {
-      const tbody = document.getElementById('tabela-atendimentos');
-      tbody.innerHTML = '';
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(atendimento)
+        });
 
-      snapshot.forEach((child) => {
-        const item = child.val();
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${item.nome}</td>
-          <td>${item.descricao}</td>
-          <td>${formatarDataBR(item.data)}</td>
-          <td>${item.empresa}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-    });
+        if (res.ok) {
+          alert("Atendimento salvo com sucesso!");
+          limparFormulario();
+          carregarAtendimentos();
+        } else {
+          const erro = await res.json();
+          alert("Erro ao salvar: " + (erro.error || 'Desconhecido'));
+        }
+      } catch (error) {
+        alert("Erro de conexão: " + error.message);
+      }
+    }
 
-    function formatarDataBR(dataISO) {
-      if (!dataISO) return '';
-      const partes = dataISO.split('-');
-      if (partes.length !== 3) return dataISO;
-      return `${partes[2]}/${partes[1]}/${partes[0]}`;
+    function limparFormulario() {
+      document.getElementById('nomeAtend').value = '';
+      document.getElementById('descricaoAtend').value = '';
+      document.getElementById('dataAtend').value = '';
+      document.getElementById('empresaAtend').value = '';
+    }
+
+    async function carregarAtendimentos() {
+      try {
+        const res = await fetch(API_URL);
+        const dados = await res.json();
+
+        const tbody = document.getElementById('tabela-atendimentos');
+        tbody.innerHTML = '';
+
+        dados.forEach(item => {
+          const id = item.id || item._id;
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${item.nome}</td>
+            <td>${item.descricao}</td>
+            <td>${formatarData(item.data)}</td>
+            <td>${item.empresa}</td>
+            <td><button onclick="deletarAtendimento('${id}')">Excluir</button></td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (error) {
+        console.error("Erro ao carregar atendimentos:", error.message);
+      }
+    }
+
+    // ✅ Formata corretamente a data no formato brasileiro
+    function formatarData(dataString) {
+      const [ano, mes, dia] = dataString.split("-");
+      return `${dia}/${mes}/${ano}`;
+    }
+
+    async function deletarAtendimento(id) {
+      if (!confirm("Tem certeza que deseja excluir este atendimento?")) return;
+
+      try {
+        const res = await fetch(`${API_URL}/${id}`, {
+          method: 'DELETE'
+        });
+
+        if (res.ok) {
+          alert("Atendimento excluído com sucesso.");
+          carregarAtendimentos();
+        } else {
+          let erroTexto = await res.text();
+          try {
+            const erro = JSON.parse(erroTexto);
+            alert("Erro ao excluir: " + (erro.error || 'Desconhecido'));
+          } catch {
+            alert("Erro ao excluir (resposta inesperada): " + erroTexto);
+          }
+        }
+      } catch (error) {
+        alert("Erro de conexão: " + error.message);
+      }
+    }
+
+    // Carrega os dados assim que a página abrir
+    carregarAtendimentos();
+
+    const SENHA_PADRAO = "Lvr1939";
+
+    function verificarSenha() {
+      const senha = document.getElementById("senhaLogin").value;
+      if (senha === SENHA_PADRAO) {
+        document.getElementById("tela-login").style.display = "none";
+        document.getElementById("form-atendimento").style.display = "block";
+        document.querySelector("table").style.display = "table";
+        document.querySelector("h2:nth-of-type(2)").style.display = "block";
+        carregarAtendimentos();
+      } else {
+        alert("Senha incorreta!");
+      }
     }
   </script>
 </body>
 </html>
+
+<!-- Deixar privado no github todos os projetos -->
+<!-- Ajustar estilização -->

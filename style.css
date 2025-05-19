@@ -29,14 +29,14 @@ input, textarea, button {
 }
 
 button {
-  background-color: #007bff;
+  background-color: #d8773f;
   color: white;
   cursor: pointer;
   border: none;
 }
 
 button:hover {
-  background-color: #0056b3;
+  background-color: #d8773f;
 }
 
 #mensagem {
